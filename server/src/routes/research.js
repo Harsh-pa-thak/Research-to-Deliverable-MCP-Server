@@ -1,5 +1,6 @@
 import express from 'express'
 import { fetchAndExtract } from '../services/scraper.js'
+import { sumCont } from '../services/ai.js'
 
 const router = express.Router();
 
@@ -9,7 +10,8 @@ router.post('/scrape', async (req, res) => {
 
     try {
         const result = await fetchAndExtract(url);
-        res.json({ success: true, value: result });
+        const summery = await sumCont(result);
+        res.json({ success: true, value: summery });
     }
     catch (err) {
         res.status(500).json({ error: "internal server error" })
