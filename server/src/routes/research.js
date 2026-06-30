@@ -26,7 +26,8 @@ router.post('/scrape', async (req, res) => {
         });
     }
     catch (err) {
-        res.status(500).json({ error: "internal server error" })
+        console.error('[ERROR]', err.message);
+        res.status(500).json({ error: err.message })
     }
 
 });

@@ -1,30 +1,18 @@
-import { v2 as cloudinary } from 'cloudinary';
-import { Readable } from 'Stream';
-import dotenv from 'dotenv';
-dotenv.config();
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-cloudinary.config({
-    cloud_name: process.env.CLOUD_NAME,
-    api_key: process.env.API_KEY,
-    api_secret: process.env.API_SECRET,
-});
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PDF_DIR = path.join(__dirname, '../../public/pdfs');
+
+// Create folder if it doesn't exist
+if (!fs.existsSync(PDF_DIR)) fs.mkdirSync(PDF_DIR, { recursive: true });
+
 export async function upload(pdfBuf, title = 'Research-Report') {
-    const pubId = `research-pdfs/${title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${Date.now()}`;
-    return new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-            {
-                public_id: pubId,
-                resource_type: "raw",
-                format: 'pdf',
-            },
+    const filename = `${title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${Date.now()}.pdf`;
+    const filepath = path.join(PDF_DIR, filename);
 
-            (error, result) => {
-                if (error) return reject(error);
-                resolve(result.secure_url);
-            }
+    fs.writeFileSync(filepath, Buffer.from(pdfBuf));
 
-        );
-        Readable.from(pdfBuf).pipe(uploadStream);
-    })
-
+    return `http://localhost:3000/pdfs/${filename}`;
 }

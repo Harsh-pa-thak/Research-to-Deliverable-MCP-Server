@@ -1,36 +1,56 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import dotenv from 'dotenv'
+import Groq from 'groq-sdk';
+import dotenv from 'dotenv';
 dotenv.config();
 
-const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = ai.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export async function sumCont(data) {
     const { title, headings, bodyText, url } = data;
 
-    const prompt = `
-        You are a professional research assistant. Read the following web page content and produce a clean, structured research document.
-        SOURCE: ${url}
-        TITLE: ${title}
-        HEADINGS: ${headings.slice(0, 15).join(' | ')}
-        FULL CONTENT:
-        ${bodyText}
-        ---
-        Write a structured research summary with exactly these sections:
-        # ${title}
-        ## Overview
-        (2–3 sentences: what is this page/topic about?)
-        ## Key Points
-        (6–8 bullet points of the most important facts or ideas)
-        ## In Depth
-        (2–3 short paragraphs expanding on the key points)
-        ## Takeaway
-        (1 sentence: the single most important thing to remember)
-        ## Source
-        - URL: ${url}
-        - Scraped: ${new Date().toLocaleDateString()}
-        `;
-    const result = await model.generateContent(prompt);
-    return result.response.text();
+    const response = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',   // best free model on Groq
+        messages: [
+            {
+                role: 'system',
+                content: 'You are a professional research assistant. Produce clean, structured research documents from web content.',
+            },
+            {
+                role: 'user',
+                content: `
+SOURCE: ${url}
+TITLE: ${title}
+HEADINGS: ${headings.slice(0, 15).join(' | ')}
 
+FULL CONTENT:
+${bodyText}
+
+---
+
+Write a structured research summary with exactly these sections:
+
+# ${title}
+
+## Overview
+(2–3 sentences: what is this page/topic about?)
+
+## Key Points
+(6–8 bullet points of the most important facts or ideas)
+
+## In Depth
+(2–3 short paragraphs expanding on the key points)
+
+## Takeaway
+(1 sentence: the single most important thing to remember)
+
+## Source
+- URL: ${url}
+- Scraped: ${new Date().toLocaleDateString()}
+`,
+            },
+        ],
+        temperature: 0.3,    // lower = more factual, less creative
+        max_tokens: 2048,
+    });
+
+    return response.choices[0].message.content;
 }

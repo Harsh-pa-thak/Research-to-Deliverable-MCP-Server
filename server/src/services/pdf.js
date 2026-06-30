@@ -5,9 +5,8 @@ export async function createPdf(content, title = "Research Report") {
     let browser;
     try {
         browser = await puppeteer.launch({
-            headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'
-            ]
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
         });
         const page = await browser.newPage();
         const bodyHtml = marked(content);
